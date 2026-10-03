@@ -23,7 +23,7 @@ body{display:flex;justify-content:center;align-items:flex-start}
 <img id="bg" src="bazaro-start.jpg" alt="Bazaro 2027">
 <svg id="overlay" viewBox="0 0 1000 1778" preserveAspectRatio="xMidYMid meet">
  <g id="countGroup" transform="matrix(0.82 0 -0.060 0.300 125 735)">
-  <text class="small" x="500" y="385" font-size="75">noch</text>
+  <text class="small" x="500" y="420" font-size="75">noch</text>
   <text id="days" class="big" x="500" y="620" font-size="237">0</text>
   <text class="small" x="500" y="785" font-size="75">Tage</text>
  </g>
@@ -64,11 +64,13 @@ body{display:flex;justify-content:center;align-items:flex-start}
 <script>
 (()=>{
  const bg=document.getElementById("bg"), scene=document.getElementById("scene"), overlay=document.getElementById("overlay");
- bg.addEventListener("load",()=>{
-   const w=bg.naturalWidth,h=bg.naturalHeight;
+ function syncImageGeometry(){
+   const w=bg.naturalWidth||1000,h=bg.naturalHeight||1778;
    overlay.setAttribute("viewBox",`0 0 ${w} ${h}`);
    scene.style.setProperty("--ratio",w/h);
- });
+ }
+ bg.addEventListener("load",syncImageGeometry);
+ if(bg.complete && bg.naturalWidth) syncImageGeometry();
  const TARGET=[2027,9,17];
  function update(){
    const n=new Date();

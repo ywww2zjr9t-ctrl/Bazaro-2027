@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bazaro 2027</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;background:#111}
+body{display:flex;justify-content:center;align-items:flex-start}
+#scene{position:relative;width:min(100vw,calc(100vh * var(--ratio)));max-width:100%;overflow:hidden;line-height:0}
+#bg{display:block;width:100%;height:auto}
+#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#countGroup text{
+ fill:rgba(62,62,62,.82);stroke:none;text-anchor:middle;
+ font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif
+}
+.small{font-weight:600;letter-spacing:.6px}.big{font-weight:760;letter-spacing:-2px}
+</style>
+</head>
+<body>
+<main id="scene">
+<img id="bg" src="bazaro-start.jpg" alt="Bazaro 2027">
+<svg id="overlay" viewBox="0 0 1000 1778" preserveAspectRatio="xMidYMid meet">
+ <g id="countGroup" transform="matrix(0.82 0 -0.060 0.300 125 735)">
+  <text class="small" x="500" y="385" font-size="75">noch</text>
+  <text id="days" class="big" x="500" y="620" font-size="237">0</text>
+  <text class="small" x="500" y="785" font-size="75">Tage</text>
+ </g>
+</svg>
+</main>
+<script>
+(()=>{
+ const bg=document.getElementById("bg"), scene=document.getElementById("scene"), overlay=document.getElementById("overlay");
+ bg.addEventListener("load",()=>{
+   const w=bg.naturalWidth,h=bg.naturalHeight;
+   overlay.setAttribute("viewBox",`0 0 ${w} ${h}`);
+   scene.style.setProperty("--ratio",w/h);
+ });
+ const TARGET=[2027,9,17];
+ function update(){
+   const n=new Date();
+   const today=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+   const target=Date.UTC(TARGET[0],TARGET[1]-1,TARGET[2]);
+   document.getElementById("days").textContent=Math.max(0,Math.ceil((target-today)/86400000));
+ }
+ update(); setInterval(update,60000);
+})();
+</script>
+</body>
+</html>

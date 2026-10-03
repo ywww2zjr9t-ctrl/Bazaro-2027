@@ -3,38 +3,95 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
 <title>Bazaro 2027</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;min-height:100%;background:#111}
-body{display:flex;justify-content:center;align-items:flex-start}
-#scene{position:relative;max-width:100%;overflow:hidden;line-height:0}
-#bg{display:block;max-width:100%;height:auto}
-#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#countGroup text{fill:rgba(62,62,62,.82);stroke:none;text-anchor:middle;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
-.small{font-weight:600;letter-spacing:.6px}.big{font-weight:760;letter-spacing:-2px}
-#error{padding:24px;color:white;font:16px/1.4 sans-serif;line-height:1.4}
-</style></head>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111}
+.stage{
+ position:fixed;
+ left:50%;top:50%;
+ width:min(100vw,56.28vh);
+ height:min(177.68vw,100vh);
+ transform:translate(-50%,-50%);
+ overflow:hidden;
+}
+.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+
+/* Wie bei WiDo: Position ausschließlich in Prozent der Bildfläche. */
+.countdown{
+ position:absolute;
+ left:55.5%;
+ top:56.0%;
+ transform:translate(-50%,-50%) perspective(700px) rotateX(58deg);
+ transform-origin:center center;
+ color:rgba(62,62,62,.82);
+ font-family:"Arial Narrow","Helvetica Neue Condensed","Helvetica Neue",Arial,sans-serif;
+ text-align:center;
+ white-space:nowrap;
+ line-height:.86;
+}
+.countdown .noch,
+.countdown .tage{
+ display:block;
+ font-size:calc(min(100vw,56.28vh)*.043);
+ font-weight:650;
+ letter-spacing:.02em;
+}
+.countdown .zahl{
+ display:block;
+ font-size:calc(min(100vw,56.28vh)*.145);
+ font-weight:850;
+ letter-spacing:-.045em;
+ font-variant-numeric:tabular-nums;
+ line-height:.78;
+ margin:.08em 0 .10em;
+}
+#error{position:absolute;inset:0;display:grid;place-items:center;padding:2rem;color:white;font:16px/1.4 sans-serif;text-align:center}
+</style>
+</head>
 <body>
-<main id="scene">
-<img id="bg" alt="">
-<svg id="overlay" viewBox="0 0 1000 1778" preserveAspectRatio="xMidYMid meet">
-  <!-- Block bewusst tiefer auf die freie Wasserfläche gesetzt -->
-  <g id="countGroup" transform="matrix(0.82 0 -0.060 0.300 250 760)">
-    <text class="small" x="500" y="300" font-size="75">noch</text>
-    <text id="days" class="big" x="500" y="620" font-size="237">0</text>
-    <text class="small" x="500" y="785" font-size="75">Tage</text>
-  </g>
-</svg>
-<div id="error" hidden></div>
+<main class="stage" aria-label="Bazaro 2027 Countdown">
+ <img class="photo" id="photo" alt="Bazaro 2027">
+ <div class="countdown" aria-live="polite">
+   <span class="noch">noch</span>
+   <span class="zahl" id="days">…</span>
+   <span class="tage">Tage</span>
+ </div>
+ <div id="error" hidden></div>
 </main>
+
 <script>
+const TARGET=new Date("2027-09-17T00:00:00+02:00");
+
+function update(){
+ const d=TARGET.getTime()-Date.now();
+ const days=d<=0?0:Math.ceil(d/86400000);
+ document.getElementById("days").textContent=days.toLocaleString("de-DE");
+}
+update();
+setInterval(update,30000);
+
+/* Genau ein frei benanntes Bild im Repository; der Dateiname ist egal. */
 (async()=>{
- const TARGET={year:2027,month:9,day:17},bg=document.getElementById("bg"),overlay=document.getElementById("overlay"),scene=document.getElementById("scene"),error=document.getElementById("error");
- function update(){const n=new Date(),today=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()),target=Date.UTC(TARGET.year,TARGET.month-1,TARGET.day);document.getElementById("days").textContent=Math.max(0,Math.ceil((target-today)/86400000))}
- update();setInterval(update,60000);
- function sync(){const w=bg.naturalWidth||1000,h=bg.naturalHeight||1778;overlay.setAttribute("viewBox",`0 0 ${w} ${h}`);scene.style.width=`min(100vw, calc(100vh * ${w/h}))`}
- async function findBackground(){const owner=location.hostname.split(".")[0],repo=location.pathname.split("/").filter(Boolean)[0];const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`,{cache:"no-store"});if(!r.ok)throw new Error("Bildliste nicht abrufbar");const files=await r.json(),imgs=files.filter(f=>f.type==="file"&&/\.(jpe?g|png|webp)$/i.test(f.name));if(imgs.length===0)throw new Error("Kein Hintergrundbild gefunden.");if(imgs.length>1)throw new Error("Mehr als ein Bild gefunden. Bitte nur das gewünschte Hintergrundbild im Repository lassen.");return imgs[0].download_url}
- try{const url=await findBackground();bg.addEventListener("load",sync,{once:true});bg.src=url+"?v="+Date.now()}catch(e){overlay.style.display="none";bg.style.display="none";error.hidden=false;error.textContent=e.message}
+ const photo=document.getElementById("photo");
+ const error=document.getElementById("error");
+ try{
+   const owner=location.hostname.split(".")[0];
+   const repo=location.pathname.split("/").filter(Boolean)[0];
+   const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`,{cache:"no-store"});
+   if(!r.ok) throw new Error("Bild konnte nicht ermittelt werden.");
+   const files=await r.json();
+   const images=files.filter(f=>f.type==="file"&&/\.(jpe?g|png|webp)$/i.test(f.name));
+   if(images.length!==1) throw new Error(images.length===0 ? "Kein Bild gefunden." : "Bitte genau ein Bild im Repository lassen.");
+   photo.src=images[0].download_url+"?v="+Date.now();
+ }catch(e){
+   photo.style.display="none";
+   document.querySelector(".countdown").style.display="none";
+   error.hidden=false;
+   error.textContent=e.message;
+ }
 })();
-</script></body></html>
+</script>
+</body>
+</html>

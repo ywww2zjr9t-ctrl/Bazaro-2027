@@ -11,20 +11,16 @@ body{display:flex;justify-content:center;align-items:flex-start}
 #scene{position:relative;max-width:100%;overflow:hidden;line-height:0}
 #bg{display:block;max-width:100%;height:auto}
 #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#countGroup text{
- fill:rgba(62,62,62,.82);stroke:none;text-anchor:middle;
- font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif
-}
-.small{font-weight:600;letter-spacing:.6px}
-.big{font-weight:760;letter-spacing:-2px}
+#countGroup text{fill:rgba(62,62,62,.82);stroke:none;text-anchor:middle;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+.small{font-weight:600;letter-spacing:.6px}.big{font-weight:760;letter-spacing:-2px}
 #error{padding:24px;color:white;font:16px/1.4 sans-serif;line-height:1.4}
-</style>
-</head>
+</style></head>
 <body>
 <main id="scene">
 <img id="bg" alt="">
 <svg id="overlay" viewBox="0 0 1000 1778" preserveAspectRatio="xMidYMid meet">
-  <g id="countGroup" transform="matrix(0.82 0 -0.060 0.300 125 735)">
+  <!-- Block bewusst tiefer auf die freie Wasserfläche gesetzt -->
+  <g id="countGroup" transform="matrix(0.82 0 -0.060 0.300 125 790)">
     <text class="small" x="500" y="385" font-size="75">noch</text>
     <text id="days" class="big" x="500" y="620" font-size="237">0</text>
     <text class="small" x="500" y="785" font-size="75">Tage</text>
@@ -32,60 +28,13 @@ body{display:flex;justify-content:center;align-items:flex-start}
 </svg>
 <div id="error" hidden></div>
 </main>
-
 <script>
 (async()=>{
- const TARGET={year:2027,month:9,day:17};
- const bg=document.getElementById("bg");
- const overlay=document.getElementById("overlay");
- const scene=document.getElementById("scene");
- const error=document.getElementById("error");
-
- // Countdown: Kalendertage bis zum Zieldatum.
- // Um Mitternacht sinkt die Zahl automatisch um genau 1.
- function updateCountdown(){
-   const now=new Date();
-   const today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
-   const target=Date.UTC(TARGET.year,TARGET.month-1,TARGET.day);
-   document.getElementById("days").textContent=
-     Math.max(0,Math.ceil((target-today)/86400000));
- }
- updateCountdown();
- setInterval(updateCountdown,60000);
-
- function syncGeometry(){
-   const w=bg.naturalWidth||1000,h=bg.naturalHeight||1778;
-   overlay.setAttribute("viewBox",`0 0 ${w} ${h}`);
-   scene.style.width=`min(100vw, calc(100vh * ${w/h}))`;
- }
-
- // Es soll genau EIN frei benanntes Hintergrundbild im Repository liegen.
- // README-Grafiken werden nicht verwendet; gesucht werden nur Root-Bilddateien.
- async function findBackground(){
-   const owner=location.hostname.split(".")[0];
-   const repo=location.pathname.split("/").filter(Boolean)[0];
-   if(!owner||!repo) throw new Error("Repository nicht ermittelbar");
-   const api=`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
-   const r=await fetch(api,{cache:"no-store"});
-   if(!r.ok) throw new Error("Bildliste nicht abrufbar");
-   const files=await r.json();
-   const imgs=files.filter(f=>f.type==="file"&&/\.(jpe?g|png|webp)$/i.test(f.name));
-   if(imgs.length===0) throw new Error("Kein Hintergrundbild gefunden.");
-   if(imgs.length>1) throw new Error("Mehr als ein Bild gefunden. Bitte nur das gewünschte Hintergrundbild im Repository lassen.");
-   return imgs[0].download_url;
- }
-
- try{
-   const url=await findBackground();
-   bg.addEventListener("load",syncGeometry,{once:true});
-   bg.src=url+"?v="+Date.now();
- }catch(e){
-   overlay.style.display="none";
-   bg.style.display="none";
-   error.hidden=false;
-   error.textContent=e.message;
- }
+ const TARGET={year:2027,month:9,day:17},bg=document.getElementById("bg"),overlay=document.getElementById("overlay"),scene=document.getElementById("scene"),error=document.getElementById("error");
+ function update(){const n=new Date(),today=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()),target=Date.UTC(TARGET.year,TARGET.month-1,TARGET.day);document.getElementById("days").textContent=Math.max(0,Math.ceil((target-today)/86400000))}
+ update();setInterval(update,60000);
+ function sync(){const w=bg.naturalWidth||1000,h=bg.naturalHeight||1778;overlay.setAttribute("viewBox",`0 0 ${w} ${h}`);scene.style.width=`min(100vw, calc(100vh * ${w/h}))`}
+ async function findBackground(){const owner=location.hostname.split(".")[0],repo=location.pathname.split("/").filter(Boolean)[0];const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`,{cache:"no-store"});if(!r.ok)throw new Error("Bildliste nicht abrufbar");const files=await r.json(),imgs=files.filter(f=>f.type==="file"&&/\.(jpe?g|png|webp)$/i.test(f.name));if(imgs.length===0)throw new Error("Kein Hintergrundbild gefunden.");if(imgs.length>1)throw new Error("Mehr als ein Bild gefunden. Bitte nur das gewünschte Hintergrundbild im Repository lassen.");return imgs[0].download_url}
+ try{const url=await findBackground();bg.addEventListener("load",sync,{once:true});bg.src=url+"?v="+Date.now()}catch(e){overlay.style.display="none";bg.style.display="none";error.hidden=false;error.textContent=e.message}
 })();
-</script>
-</body>
-</html>
+</script></body></html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bazaro 2027 – Bild auswählen</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:auto;padding:24px}h1{margin:0 0 6px;font-size:28px}.lead{color:#666;margin:0 0 22px}
+.panel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:16px;margin-bottom:20px}
+label{display:block;font-size:13px;font-weight:650;margin:10px 0 5px}
+input{width:100%;padding:10px;border:1px solid #bbb;border-radius:9px;font:inherit}
+button{font:inherit;cursor:pointer}.primary{margin-top:12px;background:#1d1d1f;color:white;border:0;border-radius:9px;padding:10px 14px}
+#status{margin:14px 0;color:#555;line-height:1.4}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.card{position:relative;border:2px solid transparent;background:#fff;border-radius:14px;padding:8px;text-align:left}
+.card.active{border-color:#1d1d1f}.card img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:9px}
+.name{font-size:12px;margin-top:7px;overflow-wrap:anywhere}.check{position:absolute;right:14px;top:14px;width:32px;height:32px;border-radius:50%;background:white;border:2px solid #999;display:grid;place-items:center;font-weight:800}
+.active .check{background:#1d1d1f;color:white;border-color:#1d1d1f}.note{font-size:12px;color:#777;line-height:1.45}
+a{color:inherit}
+</style></head>
+<body><main>
+<h1>Bazaro 2027</h1>
+<p class="lead">Hintergrundbild auswählen · <a href="index.html" target="_blank">öffentliche Seite öffnen</a></p>
+<section class="panel">
+<strong>GitHub verbinden</strong>
+<label>GitHub-Benutzername</label><input id="owner" autocomplete="username">
+<label>Repository</label><input id="repo">
+<label>Fine-grained Token</label><input id="token" type="password" autocomplete="off">
+<button class="primary" id="load">Bilder laden</button>
+<p class="note">Der Token benötigt nur für dieses Repository „Contents: Read and write“. Er wird nicht in einer Projektdatei oder im Browser gespeichert.</p>
+</section>
+<div id="status">Noch nicht verbunden.</div>
+<div id="grid" class="grid"></div>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), API="https://api.github.com";
+let images=[],active="bazaro-start.jpg",activeSha="";
+const hdr=()=>({"Accept":"application/vnd.github+json","Authorization":"Bearer "+$("token").value.trim(),"X-GitHub-Api-Version":"2022-11-28"});
+async function api(path,opts={}){const r=await fetch(API+path,{...opts,headers:{...hdr(),...(opts.headers||{})}});if(!r.ok)throw new Error("GitHub "+r.status);return r.json()}
+function esc(v){return v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function load(){
+ try{
+  $("status").textContent="Bilder werden geladen …";$("grid").innerHTML="";
+  const o=encodeURIComponent($("owner").value.trim()),r=encodeURIComponent($("repo").value.trim());
+  const root=await api(`/repos/${o}/${r}/contents`);
+  images=root.filter(f=>f.type==="file"&&/\.(jpe?g|png|webp)$/i.test(f.name));
+  const af=root.find(f=>f.name==="active-image.txt");
+  if(af){activeSha=af.sha;const rr=await fetch(af.download_url,{cache:"no-store"});active=(await rr.text()).trim()||"bazaro-start.jpg";}
+  render();$("status").textContent=images.length+" Bild(er) gefunden. Gewünschtes Bild anklicken.";
+ }catch(e){$("status").textContent="Verbindung fehlgeschlagen: "+e.message}
+}
+function render(){
+ $("grid").innerHTML="";
+ images.forEach(f=>{
+  const b=document.createElement("button");b.type="button";b.className="card"+(f.name===active?" active":"");
+  b.innerHTML=`<span class="check">${f.name===active?"✓":""}</span><img src="${f.download_url}" alt=""><div class="name">${esc(f.name)}</div>`;
+  b.addEventListener("click",()=>choose(f.name));$("grid").appendChild(b);
+ });
+}
+async function choose(name){
+ try{
+  $("status").textContent="Auswahl wird gespeichert …";
+  const o=encodeURIComponent($("owner").value.trim()),r=encodeURIComponent($("repo").value.trim());
+  const content=btoa(unescape(encodeURIComponent(name+"\\n")));
+  const body={message:"Bazaro: Hintergrundbild auswählen",content};if(activeSha)body.sha=activeSha;
+  const data=await api(`/repos/${o}/${r}/contents/active-image.txt`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  activeSha=data.content.sha;active=name;render();
+  $("status").textContent="✓ Ausgewählt. GitHub Pages veröffentlicht die Änderung automatisch.";
+ }catch(e){$("status").textContent="Speichern fehlgeschlagen: "+e.message}
+}
+$("load").addEventListener("click",load);
+})();
+</script>
+</body></html>

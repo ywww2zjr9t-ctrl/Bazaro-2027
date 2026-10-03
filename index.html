@@ -30,6 +30,17 @@ body{display:flex;justify-content:center;align-items:flex-start}
 </svg>
 </main>
 <script>
+(async()=>{
+  try{
+    const r=await fetch("active-image.txt?"+Date.now(),{cache:"no-store"});
+    if(r.ok){
+      const name=(await r.text()).trim();
+      if(name) document.getElementById("bg").src=encodeURI(name);
+    }
+  }catch(e){}
+})();
+</script>
+<script>
 (()=>{
  const bg=document.getElementById("bg"), scene=document.getElementById("scene"), overlay=document.getElementById("overlay");
  bg.addEventListener("load",()=>{

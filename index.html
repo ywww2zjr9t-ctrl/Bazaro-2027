@@ -18,34 +18,46 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111}
 }
 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
 
-/* Wie bei WiDo: Position ausschließlich in Prozent der Bildfläche. */
+/* WiDo-Prinzip: Position bleibt ausschließlich prozentual auf dem Foto. */
 .countdown{
  position:absolute;
- left:55.5%;
- top:56.0%;
- transform:translate(-50%,-50%) perspective(700px) rotateX(58deg);
+ left:52.5%;
+ top:59.5%;
+ transform:
+   translate(-50%,-50%)
+   perspective(900px)
+   rotateX(70deg)
+   rotateZ(-3deg);
  transform-origin:center center;
- color:rgba(62,62,62,.82);
+ color:rgba(62,62,62,.78);
  font-family:"Arial Narrow","Helvetica Neue Condensed","Helvetica Neue",Arial,sans-serif;
  text-align:center;
  white-space:nowrap;
- line-height:.86;
+ line-height:1;
 }
-.countdown .noch,
-.countdown .tage{
+.countdown .noch{
  display:block;
- font-size:calc(min(100vw,56.28vh)*.043);
+ font-size:calc(min(100vw,56.28vh)*.060);
  font-weight:650;
- letter-spacing:.02em;
+ letter-spacing:.025em;
+ line-height:1.05;
+ margin-bottom:.10em;
 }
 .countdown .zahl{
  display:block;
- font-size:calc(min(100vw,56.28vh)*.145);
+ font-size:calc(min(100vw,56.28vh)*.205);
  font-weight:850;
  letter-spacing:-.045em;
  font-variant-numeric:tabular-nums;
- line-height:.78;
- margin:.08em 0 .10em;
+ line-height:.76;
+ margin:.02em 0 .13em;
+}
+.countdown .tage{
+ display:block;
+ font-size:calc(min(100vw,56.28vh)*.065);
+ font-weight:650;
+ letter-spacing:.02em;
+ line-height:1.05;
 }
 #error{position:absolute;inset:0;display:grid;place-items:center;padding:2rem;color:white;font:16px/1.4 sans-serif;text-align:center}
 </style>

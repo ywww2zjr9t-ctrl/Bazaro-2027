@@ -31,13 +31,34 @@ body{display:flex;justify-content:center;align-items:flex-start}
 </main>
 <script>
 (async()=>{
+  const bg=document.getElementById("bg");
+  const fallback="bazaro-start.jpg";
+
+  function show(path){
+    return new Promise((resolve,reject)=>{
+      const ok=()=>{cleanup();resolve()};
+      const bad=()=>{cleanup();reject()};
+      const cleanup=()=>{bg.removeEventListener("load",ok);bg.removeEventListener("error",bad)};
+      bg.addEventListener("load",ok,{once:true});
+      bg.addEventListener("error",bad,{once:true});
+      // URL resolves spaces, umlauts and other filename characters correctly
+      // relative to the current GitHub Pages directory.
+      bg.src=new URL(path,document.baseURI).href;
+    });
+  }
+
   try{
-    const r=await fetch("active-image.txt?"+Date.now(),{cache:"no-store"});
-    if(r.ok){
-      const name=(await r.text()).trim();
-      if(name) document.getElementById("bg").src=encodeURI(name);
+    const r=await fetch(new URL("active-image.txt?"+Date.now(),document.baseURI),{cache:"no-store"});
+    const name=r.ok?(await r.text()).trim():"";
+    if(name){
+      try{await show(name)}
+      catch(e){await show(fallback)}
+    }else{
+      await show(fallback);
     }
-  }catch(e){}
+  }catch(e){
+    try{await show(fallback)}catch(_){}
+  }
 })();
 </script>
 <script>
